@@ -6,7 +6,7 @@ import {
   SectionList,
   ActivityIndicator,
   Button,
-  TextInput, // <-- Import TextInput
+  TextInput,
 } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/api';
@@ -51,7 +51,6 @@ const HomeScreen = ({ navigation }) => {
     return <View style={styles.center}><Text style={styles.errorText}>{error}</Text></View>;
   }
 
-  // Header Component with Search Bar
   const ListHeader = () => {
     const [query, setQuery] = useState('');
     const handleSearch = () => {
@@ -63,7 +62,16 @@ const HomeScreen = ({ navigation }) => {
       <>
         <View style={styles.header}>
           <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
-          <Button title="Logout" onPress={logout} color="#ff4d4d" />
+          <View style={{flexDirection: 'row', alignItems: 'center'}}>
+            {/* THIS IS THE TEST BUTTON */}
+            <Button 
+                title="Crash App" 
+                onPress={() => { throw new Error("Sentry Test Crash!"); }} 
+                color="#c0392b" // A red color
+            />
+            <View style={{width: 10}}/> 
+            <Button title="Logout" onPress={logout} />
+          </View>
         </View>
         <View style={styles.searchContainer}>
             <TextInput
@@ -71,7 +79,7 @@ const HomeScreen = ({ navigation }) => {
                 placeholder="Search shops, products, etc..."
                 value={query}
                 onChangeText={setQuery}
-                onSubmitEditing={handleSearch} // Search when user presses enter
+                onSubmitEditing={handleSearch}
             />
             <Button title="Search" onPress={handleSearch} />
         </View>
@@ -94,27 +102,15 @@ const HomeScreen = ({ navigation }) => {
   );
 };
 
-// ... (styles remain the same, adding search styles)
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   container: { flex: 1, backgroundColor: '#f0f2f5' },
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#ddd',
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#ddd', },
   welcomeText: { fontSize: 18, fontWeight: '500' },
-  // NEW SEARCH STYLES
-  searchContainer: {
-    backgroundColor: 'white', padding: 10, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#ddd',
-  },
-  searchInput: {
-    flex: 1, height: 40, borderColor: '#ccc', borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, marginRight: 10, backgroundColor: '#f9f9f9',
-  },
-  sectionTitle: {
-    fontSize: 22, fontWeight: 'bold', backgroundColor: '#f0f2f5', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10,
-  },
-  listItem: {
-    backgroundColor: 'white', padding: 16, marginHorizontal: 16, borderRadius: 8, marginBottom: 12,
-  },
+  searchContainer: { backgroundColor: 'white', padding: 10, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#ddd', },
+  searchInput: { flex: 1, height: 40, borderColor: '#ccc', borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, marginRight: 10, backgroundColor: '#f9f9f9', },
+  sectionTitle: { fontSize: 22, fontWeight: 'bold', backgroundColor: '#f0f2f5', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10, },
+  listItem: { backgroundColor: 'white', padding: 16, marginHorizontal: 16, borderRadius: 8, marginBottom: 12, },
   itemName: { fontSize: 16, fontWeight: 'bold' },
   itemDetail: { fontSize: 14, color: '#555', marginTop: 4 },
   errorText: { color: 'red' }
