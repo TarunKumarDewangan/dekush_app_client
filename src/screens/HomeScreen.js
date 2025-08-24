@@ -7,42 +7,45 @@ import {
   ActivityIndicator,
   Button,
   TextInput,
+  Alert, // <-- Make sure Alert is imported
 } from 'react-native';
+import * as Sentry from '@sentry/react-native'; // <-- Import Sentry
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/api';
 import ShopCard from '../components/ShopCard';
 
 const HomeScreen = ({ navigation }) => {
-  const { user, logout } = useAuth();
+  const { user, isGuest, logout } = useAuth();
   
   const [sections, setSections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [shopsResponse, hospitalsResponse, ambulancesResponse] = await Promise.all([
-        apiClient.get('/shops'),
-        apiClient.get('/hospitals'),
-        apiClient.get('/ambulances')
-      ]);
-      
-      const formattedSections = [
-        { title: 'Featured Shops', data: shopsResponse.data.shops || [], renderItem: ({ item }) => <ShopCard shop={item} onPress={() => navigation.navigate('ShopDetail', { shopId: item.id })} /> },
-        { title: 'Nearby Hospitals', data: hospitalsResponse.data || [], renderItem: ({ item }) => <View style={styles.listItem}><Text style={styles.itemName}>{item.name}</Text><Text style={styles.itemDetail}>{item.address}</Text></View> },
-        { title: 'Ambulance Services', data: ambulancesResponse.data || [], renderItem: ({ item }) => <View style={styles.listItem}><Text style={styles.itemName}>{item.service_name} - {item.city}</Text><Text style={styles.itemDetail}>Phone: {item.phone_number}</Text></View> }
-      ];
-      setSections(formattedSections);
-    } catch (err) {
-      setError('Could not load data.');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const [shopsResponse, hospitalsResponse, ambulancesResponse] = await Promise.all([
+          apiClient.get('/shops'),
+          apiClient.get('/hospitals'),
+          apiClient.get('/ambulances')
+        ]);
+        
+        const formattedSections = [
+          { title: 'Featured Shops', data: shopsResponse.data.shops || [], renderItem: ({ item }) => <ShopCard shop={item} onPress={() => navigation.navigate('ShopDetail', { shopId: item.id })} /> },
+          { title: 'Nearby Hospitals', data: hospitalsResponse.data || [], renderItem: ({ item }) => <View style={styles.listItem}><Text style={styles.itemName}>{item.name}</Text><Text style={styles.itemDetail}>{item.address}</Text></View> },
+          { title: 'Ambulance Services', data: ambulancesResponse.data || [], renderItem: ({ item }) => <View style={styles.listItem}><Text style={styles.itemName}>{item.service_name} - {item.city}</Text><Text style={styles.itemDetail}>Phone: {item.phone_number}</Text></View> }
+        ];
+        setSections(formattedSections);
+      } catch (err) {
+        setError('Could not load data.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
     fetchData();
-  }, [fetchData]);
+  }, []);
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" /></View>;
@@ -61,18 +64,35 @@ const HomeScreen = ({ navigation }) => {
     return (
       <>
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
-          <View style={{flexDirection: 'row', alignItems: 'center'}}>
-            {/* THIS IS THE TEST BUTTON */}
-            <Button 
-                title="Crash App" 
-                onPress={() => { throw new Error("Sentry Test Crash!"); }} 
-                color="#c0392b" // A red color
-            />
-            <View style={{width: 10}}/> 
-            <Button title="Logout" onPress={logout} />
-          </View>
+            {user ? (
+                <>
+                    <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
+                    <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                        {/* THIS IS THE TEST BUTTON */}
+                        <Button 
+                            title="Test Sentry"
+                            onPress={() => { 
+                                Sentry.captureMessage("Sentry is connected!"); 
+                                Alert.alert("Message Sent!", "Check your Sentry dashboard in a minute."); 
+                            }} 
+                            color="#3498db" // A blue color
+                        />
+                        <View style={{width: 10}}/> 
+                        <Button title="Logout" onPress={logout} color="#e74c3c" />
+                    </View>
+                </>
+            ) : (
+                <>
+                    <Text style={styles.welcomeText}>Browse as Guest</Text>
+                    <View style={{flexDirection: 'row'}}>
+                        <Button title="Login" onPress={() => navigation.navigate('Login')} />
+                        <View style={{width: 10}}/>
+                        <Button title="Register" onPress={() => navigation.navigate('Register')} color="#28a745" />
+                    </View>
+                </>
+            )}
         </View>
+
         <View style={styles.searchContainer}>
             <TextInput
                 style={styles.searchInput}
@@ -105,12 +125,22 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   container: { flex: 1, backgroundColor: '#f0f2f5' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#ddd', },
+  header: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: 'white', borderBottomWidth: 1, borderBottomColor: '#ddd',
+  },
   welcomeText: { fontSize: 18, fontWeight: '500' },
-  searchContainer: { backgroundColor: 'white', padding: 10, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#ddd', },
-  searchInput: { flex: 1, height: 40, borderColor: '#ccc', borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, marginRight: 10, backgroundColor: '#f9f9f9', },
-  sectionTitle: { fontSize: 22, fontWeight: 'bold', backgroundColor: '#f0f2f5', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10, },
-  listItem: { backgroundColor: 'white', padding: 16, marginHorizontal: 16, borderRadius: 8, marginBottom: 12, },
+  searchContainer: {
+    backgroundColor: 'white', padding: 10, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#ddd',
+  },
+  searchInput: {
+    flex: 1, height: 40, borderColor: '#ccc', borderWidth: 1, borderRadius: 8, paddingHorizontal: 10, marginRight: 10, backgroundColor: '#f9f9f9',
+  },
+  sectionTitle: {
+    fontSize: 22, fontWeight: 'bold', backgroundColor: '#f0f2f5', paddingHorizontal: 16, paddingTop: 20, paddingBottom: 10,
+  },
+  listItem: {
+    backgroundColor: 'white', padding: 16, marginHorizontal: 16, borderRadius: 8, marginBottom: 12,
+  },
   itemName: { fontSize: 16, fontWeight: 'bold' },
   itemDetail: { fontSize: 14, color: '#555', marginTop: 4 },
   errorText: { color: 'red' }

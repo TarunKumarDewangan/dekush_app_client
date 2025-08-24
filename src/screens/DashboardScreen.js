@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -11,12 +11,14 @@ import {
 } from 'react-native';
 import apiClient from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
-const DashboardScreen = ({ navigation }) => {
+const DashboardScreen = () => {
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { logout, user } = useAuth();
+  const navigation = useNavigation();
 
   const fetchShops = async () => {
     try {
@@ -24,19 +26,17 @@ const DashboardScreen = ({ navigation }) => {
       const response = await apiClient.get('/owner/shops');
       setShops(response.data);
     } catch (err) {
-      console.error("Failed to fetch owner's shops:", err);
       setError('Could not load your shops. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+  useFocusEffect(
+    useCallback(() => {
       fetchShops();
-    });
-    return unsubscribe;
-  }, [navigation]);
+    }, [])
+  );
 
   if (loading) {
     return <View style={styles.center}><ActivityIndicator size="large" color="#007bff" /></View>;
@@ -65,15 +65,22 @@ const DashboardScreen = ({ navigation }) => {
         <>
           <View style={styles.header}>
             <Text style={styles.welcomeText}>Welcome, {user.name}!</Text>
-            <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-                <Text style={styles.logoutButtonText}>LOGOUT</Text>
-            </TouchableOpacity>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {/* THIS IS THE CORRECTED, SIMPLE NAVIGATION CALL */}
+                <Button 
+                    title="Browse App" 
+                    onPress={() => navigation.navigate('Home')} 
+                />
+                <View style={{width: 10}} />
+                <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                    <Text style={styles.logoutButtonText}>LOGOUT</Text>
+                </TouchableOpacity>
+            </View>
           </View>
           <View style={styles.titleContainer}>
             <Text style={styles.title}>My Shops</Text>
             <Button
               title="+ Create New Shop"
-              // THIS IS THE IMPORTANT CHANGE
               onPress={() => navigation.navigate('CreateShop')} 
             />
           </View>
@@ -83,10 +90,9 @@ const DashboardScreen = ({ navigation }) => {
       ListEmptyComponent={
         <View style={styles.emptyView}>
           <Text style={styles.emptyText}>You haven't created any shops yet.</Text>
-          <Text style={styles.emptyText}>Click the button above to get started!</Text>
         </View>
       }
-      contentContainerStyle={{ flexGrow: 1 }} // Ensures empty component can be centered
+      contentContainerStyle={{ flexGrow: 1 }}
     />
   );
 };
@@ -109,15 +115,8 @@ const styles = StyleSheet.create({
   shopName: { fontSize: 18, fontWeight: '600' },
   shopDescription: { fontSize: 14, color: 'gray' },
   errorText: { textAlign: 'center', color: 'red', marginVertical: 10, },
-  emptyView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  emptyText: {
-    fontSize: 16,
-    color: 'gray',
-  }
+  emptyView: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  emptyText: { fontSize: 16, color: 'gray', }
 });
 
 export default DashboardScreen;
