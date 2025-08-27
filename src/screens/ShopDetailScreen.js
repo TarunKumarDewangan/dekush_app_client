@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import apiClient from '../services/api';
 
-const ASSET_URL = 'http://10.0.2.2:8000/storage/';
+//const ASSET_URL = 'http://10.0.2.2:8000/storage/';
+const ASSET_URL = 'https://dekush.in/storage/';
 
 const ShopDetailScreen = ({ route }) => {
   const { shopId } = route.params;

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 
 // The URL to your Laravel backend's public storage
-const ASSET_URL = 'http://10.0.2.2:8000/storage/';
+//const ASSET_URL = 'http://10.0.2.2:8000/storage/';
+const ASSET_URL = 'https://dekush.in/storage/';
 
 const ShopCard = ({ shop, onPress }) => {
   // Determine the image URL. Use a placeholder if the shop has no images.
